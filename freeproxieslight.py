@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-(c) 2017 AndyFX proxy getter and checker, light version  
+(c) 2017-2020 AndyFX proxy getter and checker, light version  
 """
 import requests, time
 from multiprocessing import Pool
@@ -12,7 +12,7 @@ VER = '2.2-light[3/20/2019]'
 DEBUG = False # show or not debug messages
 THREADS = 0   # 0 - autoselect, otherwise - number of threads
 PROXIES_URLS = proxylist.PROXIES_URLS # list of urls needed, which have lists of proxies
-MAIN_TIMEOUT = 2  # in sec
+MAIN_TIMEOUT = 2  # in seconds
 TEST_PATTERN = {'url': 'https://slack.com/api/api.test',
                 'answer': '{"ok":true}',
                 'partially': 0}
@@ -107,8 +107,8 @@ def make_list_unique(lst):
 
 
 def txt_to_list(txt):
-    txt = txt.replace('\r', '')  # remove \r
-    result = txt.split('\n')  # convert to list
+    txt = txt.replace('\r', '') 
+    result = txt.split('\n')
     return result
 
 
@@ -145,6 +145,15 @@ def tst_proxies(proxies, test_proxies=True):
 
 
 def get_tested_proxies(test_proxies=True):
+    '''
+    Main function for generation [tested] proxies
+    
+    Keyword arguments:
+    test_proxies - bool flag for test proxies or not (default - True)    
+    
+    Output:
+    dict {'proxies': [list], 'info': str, 'errors': str}
+    '''
     results = get_proxies()
     goods, info, errors = [], '', ''
     if results['errors'] == '':
