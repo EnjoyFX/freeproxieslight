@@ -12,7 +12,7 @@ the_list = result['proxies']
 
 ```
 
-**Additional info: **
+**Additional info:**
 
 You should have/or create file **proxylist.py** with list of needed proxies in this simpliest format:
 
