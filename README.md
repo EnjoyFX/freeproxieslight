@@ -10,6 +10,7 @@ import freeproxieslight as fpl
 result = fpl.get_tested_proxies()
 the_list = result['proxies']
 
+
 ```
 
 **Additional info:**

@@ -1,2 +1,5 @@
 # ignoring list with proxy urls - should be own
 proxylist.py
+viminfo.txt
+*.xml
+*.idea

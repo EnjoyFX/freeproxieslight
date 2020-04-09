@@ -2,52 +2,54 @@
 """
 (c) 2017-2020 AndyFX proxy getter and checker, light version  
 """
-import requests, time
-from multiprocessing import Pool
+__version__ = '2.4'
+
 from multiprocessing.dummy import Pool as ThreadPool
 
-import proxylist # file with list of proxy urls
+import proxylist  # file with list of proxy urls
+import requests
+import time
 
-VER = '2.2-light[3/20/2019]'
-DEBUG = False # show or not debug messages
-THREADS = 0   # 0 - autoselect, otherwise - number of threads
-PROXIES_URLS = proxylist.PROXIES_URLS # list of urls needed, which have lists of proxies
+DEBUG = False  # show or not debug messages
+THREADS = 0  # 0 - autoselect, otherwise - number of threads
+PROXIES_URLS = proxylist.PROXIES_URLS  # list of urls needed, which have lists of proxies
 MAIN_TIMEOUT = 2  # in seconds
 TEST_PATTERN = {'url': 'https://slack.com/api/api.test',
                 'answer': '{"ok":true}',
                 'partially': 0}
 
-print('FreeProxiesLight Module connected, version {}'.format(VER))
+print('FreeProxiesLight Module connected, version {}'.format(__version__))
+
 
 def tst_one(url, output=DEBUG):
-    URL_for_check = TEST_PATTERN['url']
+    url_for_check = TEST_PATTERN['url']
     proxies = {'http': url, 'https': url}
     try:
-        handle = requests.get(URL_for_check, proxies=proxies, timeout=MAIN_TIMEOUT).text
+        handle = requests.get(url_for_check, proxies=proxies, timeout=MAIN_TIMEOUT).text
         if TEST_PATTERN['partially'] != 0:
             handle = handle[:TEST_PATTERN['partially']]
         if handle == TEST_PATTERN['answer']:
             return url
     except Exception as err:
-        if DEBUG:
+        if output:
             print(err)
 
 
 def parse_proxies_to_list(html_text):
-    DLM1, DLM2 = 'class="table table-striped table-bordered', '<div class="list-bottom">'
-    html = g_mid(html_text, DLM1, DLM2)
+    dlm1, dlm2 = 'class="table table-striped table-bordered', '<div class="list-bottom">'
+    html = g_mid(html_text, dlm1, dlm2)
 
-    DLM1, DLM2 = '</thead><tbody><tr><td>', '</tr></tbody><tfoot><tr>'
-    html = g_mid(html, DLM1, DLM2)
+    dlm1, dlm2 = '</thead><tbody><tr><td>', '</tr></tbody><tfoot><tr>'
+    html = g_mid(html, dlm1, dlm2)
 
-    ROWZ = html.split("</tr><tr><td>")
+    rows = html.split("</tr><tr><td>")
 
     lst = []
-    for R in ROWZ:
-        R = R.replace("</td>", "").replace("<td class='hm'>", "<td>").replace("<td class='hx'>", "<td>")
-        R = R.replace('<td class="hm">', '<td>').replace('<td class="hx">', '<td>')
-        theL = R.split('<td>')
-        lst.append(theL[0] + ':' + theL[1])
+    for r in rows:
+        r = r.replace("</td>", "").replace("<td class='hm'>", "<td>").replace("<td class='hx'>", "<td>")
+        r = r.replace('<td class="hm">', '<td>').replace('<td class="hx">', '<td>')
+        the_s = r.split('<td>')
+        lst.append(the_s[0] + ':' + the_s[1])
     return lst
 
 
@@ -103,13 +105,12 @@ def g_mid(expression, delimiter1, delimiter2):
 
 def make_list_unique(lst):
     set_lst = set(lst)
-    return (list(set_lst))
+    return list(set_lst)
 
 
 def txt_to_list(txt):
-    txt = txt.replace('\r', '') 
-    result = txt.split('\n')
-    return result
+    txt = txt.replace('\r', '')
+    return txt.split('\n')
 
 
 def tst_proxies(proxies, test_proxies=True):
@@ -120,18 +121,18 @@ def tst_proxies(proxies, test_proxies=True):
         results = pool.map(tst_one, proxies)  # Open the urls in their own threads and return the results
         pool.close()  # Close the pool and wait for the work to finish
         pool.join()
-        results = list(filter(lambda x: x != None, results))
+        results = list(filter(lambda x: x is not None, results))
     else:
         num_threads = len(proxies)
         results = list(proxies)
-        
+
     stop = time.time()
 
     the_size = len(proxies)
     the_time = stop - start  # in sec
     try:
         the_speed = the_size / the_time
-    except Exception as err:
+    except ZeroDivisionError:
         the_speed = the_size
 
     good_proxies = len(results)
@@ -139,21 +140,21 @@ def tst_proxies(proxies, test_proxies=True):
            'good': good_proxies,
            'threads': num_threads,
            'time': round(the_time, 1),
-           'speed': round(the_speed, 1), 
+           'speed': round(the_speed, 1),
            'timestamp': str(time.strftime('%X'))}
     return results, txt
 
 
 def get_tested_proxies(test_proxies=True):
-    '''
+    """
     Main function for generation [tested] proxies
-    
+
     Keyword arguments:
-    test_proxies - bool flag for test proxies or not (default - True)    
-    
+    test_proxies - bool flag for test proxies or not (default - True)
+
     Output:
     dict {'proxies': [list], 'info': str, 'errors': str}
-    '''
+    """
     results = get_proxies()
     goods, info, errors = [], '', ''
     if results['errors'] == '':
