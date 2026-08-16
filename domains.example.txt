@@ -1,5 +1,12 @@
 # One proxy-list source URL per line. Copy to domains.txt and edit.
 # Lines that are blank or start with '#' are ignored by the CLI loader.
+#
+# These HTTP/HTTPS sources share the same table layout and parse out of the
+# box. Note: SOCKS lists (e.g. socks-proxy.net) are intentionally omitted —
+# validation routes through urllib's ProxyHandler, which supports HTTP/HTTPS
+# proxies only, so SOCKS entries would never pass the check.
 https://www.sslproxies.org/
 https://free-proxy-list.net/
 https://www.us-proxy.org/
+https://www.google-proxy.net/
+https://free-proxy-list.net/anonymous-proxy.html
