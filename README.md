@@ -67,6 +67,43 @@ options:
 Copy `domains.example.txt` to `domains.txt` and edit it (blank lines and
 `#` comments are ignored).
 
+> Run the package with `python -m freeproxieslight`, **not**
+> `python freeproxieslight` — the latter runs the directory as a loose
+> script and fails on the package's relative imports.
+
+## Output
+
+`txt` (default) writes one `ip:port` per line. `json` returns the full
+record for each valid proxy:
+
+```bash
+freeproxieslight https://www.sslproxies.org/ -f json -o -
+```
+
+```json
+[
+  {
+    "address": "1.2.3.4:8080",
+    "ip": "1.2.3.4",
+    "port": "8080",
+    "latency": 0.42,
+    "anonymous": true,
+    "checked_at": "2026-08-16T22:45:00+00:00",
+    "exit_ip": "203.0.113.55",
+    "anonymity": "anonymous"
+  }
+]
+```
+
+| Field | Meaning |
+| --- | --- |
+| `address` | convenience `ip:port` |
+| `latency` | seconds for the validating request |
+| `exit_ip` | the IP the destination saw (the proxy's exit) |
+| `anonymous` | `true` if your real IP was not leaked |
+| `anonymity` | `anonymous` (IP hidden) or `transparent` (IP leaked) |
+| `checked_at` | ISO-8601 UTC timestamp of the check |
+
 ## Library usage
 
 ```python
