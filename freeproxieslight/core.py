@@ -18,6 +18,12 @@ DEFAULT_MAX_WORKERS = 50     # cap on concurrent network operations
 DEFAULT_DOMAINS_FILE = 'domains.txt'
 DEFAULT_OUTPUT_FILE = 'proxies_checked.txt'
 
+# Many proxy-list sites reject the default 'Python-urllib' agent with 403,
+# so we present a common browser User-Agent.
+USER_AGENT = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+              'AppleWebKit/537.36 (KHTML, like Gecko) '
+              'Chrome/124.0 Safari/537.36')
+
 # Validation endpoints. Each must echo an arbitrary path segment (our nonce)
 # back in its JSON body — this is what makes the check un-spoofable — and
 # report the caller's IP as JSON "origin" for the anonymity comparison.
@@ -110,7 +116,8 @@ def http_get(url: str, timeout: int = DEFAULT_TIMEOUT, proxy: str = None):
         opener = urllib.request.build_opener(handler)
     else:
         opener = urllib.request.build_opener()
-    with opener.open(url, timeout=timeout) as resp:
+    req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
+    with opener.open(req, timeout=timeout) as resp:
         return resp.status, resp.read().decode('utf-8', 'replace')
 
 

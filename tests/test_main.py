@@ -4,7 +4,7 @@ from unittest import TestCase, mock
 from urllib.error import HTTPError
 
 from freeproxieslight import (FreeProxies, Proxy, Source, check_proxy,
-                              get_own_ip, parse_table_proxies)
+                              get_own_ip, http_get, parse_table_proxies)
 from freeproxieslight.cli import main as cli_main
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -193,3 +193,34 @@ class TestCli(TestCase):
 
     def test_cli_missing_sources_file(self):
         self.assertEqual(cli_main(['-s', fixture('nope.txt'), '-q']), 2)
+
+
+class TestHttpGet(TestCase):
+    def test_sends_browser_user_agent(self):
+        # Real proxy-list sites 403 the default Python-urllib agent, so
+        # http_get must present a browser User-Agent.
+        captured = {}
+
+        class FakeResp:
+            status = 200
+
+            def read(self):
+                return b'ok'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        class FakeOpener:
+            def open(self, req, timeout=None):
+                captured['ua'] = req.get_header('User-agent')
+                return FakeResp()
+
+        with mock.patch(
+                'freeproxieslight.core.urllib.request.build_opener',
+                return_value=FakeOpener()):
+            status, text = http_get('http://example.com')
+        self.assertEqual((status, text), (200, 'ok'))
+        self.assertIn('Mozilla', captured['ua'] or '')
