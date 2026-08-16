@@ -1,4 +1,5 @@
 """freeproxieslight — a lightweight, dependency-free valid-proxy harvester."""
+from . import socks
 from .core import (
     CHECK_ENDPOINTS,
     DEFAULT_MAX_WORKERS,
@@ -10,10 +11,11 @@ from .core import (
     check_proxy,
     get_own_ip,
     http_get,
+    parse_socks_table,
     parse_table_proxies,
 )
 
-__version__ = '2.0.2'
+__version__ = '2.1.0'
 
 __all__ = [
     'FreeProxies',
@@ -23,6 +25,8 @@ __all__ = [
     'get_own_ip',
     'http_get',
     'parse_table_proxies',
+    'parse_socks_table',
+    'socks',
     'CHECK_ENDPOINTS',
     'DEFAULT_TIMEOUT',
     'DEFAULT_MAX_WORKERS',

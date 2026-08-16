@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 
+from . import socks
+
 logger = logging.getLogger(__name__)
 
 # ---- configuration (no magic numbers buried in the logic) ----
@@ -39,6 +41,7 @@ class Proxy:
     """A proxy plus whatever the validation step could learn about it."""
     ip: str
     port: str
+    scheme: str = 'http'        # http | https | socks4 | socks5
     latency: float = None       # seconds for the validating request
     anonymous: bool = None      # True if it hid our real IP from the endpoint
     checked_at: str = None      # ISO-8601 UTC timestamp of the check
@@ -102,6 +105,24 @@ def parse_table_proxies(html_text: str) -> list:
     for row in parser.rows:
         if len(row) >= 2 and row[0] and row[1].isdigit():
             proxies.append(Proxy(row[0], row[1]))
+    return proxies
+
+
+def parse_socks_table(html_text: str) -> list:
+    """
+    Parse SOCKS proxies from a socks-proxy.net-style table.
+    Columns are ip, port, code, country, version (Socks4/Socks5), ...;
+    the version cell sets each proxy's scheme.
+    :param html_text: raw HTML of a SOCKS proxy-list page
+    :return: list of Proxy with scheme 'socks4' or 'socks5'
+    """
+    parser = _ProxyTableParser()
+    parser.feed(html_text)
+    proxies = []
+    for row in parser.rows:
+        if len(row) >= 5 and row[0] and row[1].isdigit():
+            scheme = 'socks5' if '5' in row[4] else 'socks4'
+            proxies.append(Proxy(row[0], row[1], scheme=scheme))
     return proxies
 
 
@@ -178,6 +199,15 @@ def get_own_ip(timeout: int = DEFAULT_TIMEOUT):
     return None
 
 
+def _fetch_for_check(url: str, proxy, timeout: int):
+    """Route the validation request through the proxy per its scheme."""
+    if proxy.scheme in ('socks4', 'socks5'):
+        version = 4 if proxy.scheme == 'socks4' else 5
+        return socks.socks_http_get(url, proxy.address, version=version,
+                                    timeout=timeout, user_agent=USER_AGENT)
+    return http_get(url, timeout=timeout, proxy=proxy.address)
+
+
 def check_proxy(proxy, timeout: int = DEFAULT_TIMEOUT, own_ip: str = None):
     """
     Validate one proxy against CHECK_ENDPOINTS using an anti-spoofing nonce.
@@ -200,7 +230,7 @@ def check_proxy(proxy, timeout: int = DEFAULT_TIMEOUT, own_ip: str = None):
         url = template.format(nonce=nonce)
         start = time.monotonic()
         try:
-            _, body = http_get(url, timeout=timeout, proxy=proxy.address)
+            _, body = _fetch_for_check(url, proxy, timeout)
         except Exception:
             continue  # endpoint unreachable via this proxy, try the next
         origin = _origin_ip(nonce, body)

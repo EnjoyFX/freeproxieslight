@@ -8,7 +8,7 @@ from dataclasses import asdict
 from . import __version__
 from .core import (DEFAULT_DOMAINS_FILE, DEFAULT_MAX_WORKERS,
                    DEFAULT_OUTPUT_FILE, DEFAULT_TIMEOUT, FreeProxies, Source,
-                   _read_url_lines)
+                   _read_url_lines, parse_socks_table, parse_table_proxies)
 
 logger = logging.getLogger('freeproxieslight')
 
@@ -34,6 +34,9 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument('-w', '--workers', type=int, default=DEFAULT_MAX_WORKERS,
                    help=f'max concurrent workers '
                         f'(default: {DEFAULT_MAX_WORKERS})')
+    p.add_argument('--socks', action='store_true',
+                   help='parse sources as SOCKS proxy tables '
+                        '(socks-proxy.net layout) and validate over SOCKS')
     p.add_argument('-q', '--quiet', action='store_true',
                    help='only log warnings and errors')
     p.add_argument('-V', '--version', action='version',
@@ -43,13 +46,14 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def _load_sources(args):
     """Return a list of Source, or None if the sources file is missing."""
+    parser = parse_socks_table if args.socks else parse_table_proxies
     if args.sources:
-        return [Source(u) for u in args.sources]
+        return [Source(u, parser=parser) for u in args.sources]
     try:
         urls = _read_url_lines(args.sources_file)
     except FileNotFoundError:
         return None
-    return [Source(u) for u in urls]
+    return [Source(u, parser=parser) for u in urls]
 
 
 def _write_output(proxies, output, fmt):

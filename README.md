@@ -104,6 +104,28 @@ freeproxieslight https://www.sslproxies.org/ -f json -o -
 | `anonymity` | `anonymous` (IP hidden) or `transparent` (IP leaked) |
 | `checked_at` | ISO-8601 UTC timestamp of the check |
 
+## SOCKS proxies
+
+SOCKS4/SOCKS4a/SOCKS5 are supported with **no extra dependencies** — a small
+stdlib SOCKS client (`freeproxieslight.socks`) opens the tunnel and the same
+nonce validation runs over it. SOCKS5 uses remote DNS.
+
+```bash
+# validate a SOCKS list (socks-proxy.net table layout)
+freeproxieslight https://www.socks-proxy.net/ --socks -f json -o -
+```
+
+```python
+from freeproxieslight import FreeProxies, Source, parse_socks_table
+
+FreeProxies([
+    Source("https://www.socks-proxy.net/", parser=parse_socks_table),
+]).harvest("socks_checked.txt")
+```
+
+Each validated proxy records its `scheme` (`socks4`/`socks5`). Note that free
+SOCKS lists are mostly dead, so expect a low pass rate.
+
 ## Library usage
 
 ```python
