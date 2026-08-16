@@ -42,6 +42,8 @@ class Proxy:
     latency: float = None       # seconds for the validating request
     anonymous: bool = None      # True if it hid our real IP from the endpoint
     checked_at: str = None      # ISO-8601 UTC timestamp of the check
+    exit_ip: str = None         # IP the destination saw (the proxy's exit)
+    anonymity: str = None       # 'anonymous' | 'transparent' | None
 
     @property
     def address(self) -> str:
@@ -207,8 +209,13 @@ def check_proxy(proxy, timeout: int = DEFAULT_TIMEOUT, own_ip: str = None):
         proxy.latency = round(time.monotonic() - start, 3)
         proxy.checked_at = datetime.now(timezone.utc).isoformat(
             timespec='seconds')
+        proxy.exit_ip = origin
         if own_ip is not None:
-            proxy.anonymous = origin != own_ip
+            # our real IP appearing anywhere (origin, X-Forwarded-For, Via,
+            # ...) means the proxy leaked it -> transparent, else anonymous.
+            leaked = own_ip in body
+            proxy.anonymous = not leaked
+            proxy.anonymity = 'transparent' if leaked else 'anonymous'
         return proxy
     return None
 

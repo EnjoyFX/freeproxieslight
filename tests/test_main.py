@@ -135,9 +135,23 @@ class TestCheckProxy(TestCase):
         p = check_proxy(Proxy('1.2.3.4', '8080'), own_ip=OWN_IP)
         self.assertIsNotNone(p)
         self.assertEqual(p.address, '1.2.3.4:8080')
-        self.assertTrue(p.anonymous)          # exit IP differs from our own
+        self.assertTrue(p.anonymous)          # our IP not leaked
+        self.assertEqual(p.anonymity, 'anonymous')
+        self.assertEqual(p.exit_ip, EXIT_IP)
         self.assertIsNotNone(p.latency)
         self.assertIsNotNone(p.checked_at)
+
+    def test_transparent_proxy_flagged(self):
+        # genuine relay (echoes nonce) but leaks our real IP -> transparent
+        def leaky(url, timeout=None, proxy=None):
+            return 200, json.dumps({'url': url, 'origin': OWN_IP,
+                                    'headers': {'X-Forwarded-For': OWN_IP}})
+        with mock.patch('freeproxieslight.core.http_get', side_effect=leaky):
+            p = check_proxy(Proxy('8.8.8.8', '80'), own_ip=OWN_IP)
+        self.assertIsNotNone(p)
+        self.assertFalse(p.anonymous)
+        self.assertEqual(p.anonymity, 'transparent')
+        self.assertEqual(p.exit_ip, OWN_IP)
 
     @mock.patch('freeproxieslight.core.http_get', side_effect=mocked_http_get)
     def test_spoofed_response_rejected(self, _m):
@@ -185,9 +199,11 @@ class TestCli(TestCase):
             self.assertEqual(rc, 0)
             with open(out) as f:
                 data = json.load(f)
-            self.assertEqual(sorted(d['address'] if 'address' in d
-                                    else f"{d['ip']}:{d['port']}"
-                                    for d in data), sorted(expected))
+            self.assertEqual(sorted(d['address'] for d in data),
+                             sorted(expected))
+            # enriched fields are present in the JSON output
+            self.assertTrue(all('exit_ip' in d and 'anonymity' in d
+                                for d in data))
         finally:
             os.remove(out)
 

@@ -54,7 +54,8 @@ def _load_sources(args):
 
 def _write_output(proxies, output, fmt):
     if fmt == 'json':
-        text = json.dumps([asdict(p) for p in proxies], indent=2) + '\n'
+        payload = [{'address': p.address, **asdict(p)} for p in proxies]
+        text = json.dumps(payload, indent=2) + '\n'
     else:
         text = ''.join(p.address + '\n' for p in proxies)
     if output == '-':
