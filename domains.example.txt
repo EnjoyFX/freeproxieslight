@@ -1,0 +1,5 @@
+# One proxy-list source URL per line. Copy to domains.txt and edit.
+# Lines that are blank or start with '#' are ignored by the CLI loader.
+https://www.sslproxies.org/
+https://free-proxy-list.net/
+https://www.us-proxy.org/

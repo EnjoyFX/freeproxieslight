@@ -1,5 +1,29 @@
-# ignoring list with proxy urls - should be own
-proxylist.py
-viminfo.txt
-*.xml
-*.idea
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Packaging build artifacts:
+build/
+dist/
+*.egg-info/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.idea/
+
+# Logs:
+*.log
+
+# Proxy list:
+domains.txt
+
+# Results with proxies:
+proxies_all.txt
+proxies_checked.txt
